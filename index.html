@@ -3,235 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SISTEMA TIENDA JUAN DAVID CIRO - V12</title>
+    <title>SISTEMA CONTABLE JUAN DAVID - V14</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --primary: #1a252f; --ingreso: #27ae60; --egreso: #e74c3c; --info: #2980b9; --bg: #f4f7f6; }
+        :root { --primary: #1a252f; --ingreso: #27ae60; --egreso: #e74c3c; --info: #2980b9; --bg: #f4f7f6; --safety: #8e44ad; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; }
         .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         .caja-negra { background: var(--primary); color: white; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 5px; }
-        .caja-negra h1 { font-size: 2.8rem; margin: 5px 0; color: #fff; }
+        .caja-negra h1 { font-size: 2.8rem; margin: 5px 0; }
         .dato-credito { background: #e3f2fd; color: #0d47a1; padding: 10px; border-radius: 0 0 10px 10px; text-align: center; font-weight: bold; margin-bottom: 20px; border: 1px solid #bbdefb; }
         .seccion { background: #fff; border: 1px solid #ddd; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
         label { display: block; font-weight: bold; font-size: 0.8rem; color: #666; margin-bottom: 5px; }
         input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 1rem; margin-bottom: 10px; }
-        .btn { border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1rem; transition: 0.3s; }
+        .btn { border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; font-size: 1rem; transition: 0.3s; margin-bottom: 8px; }
         .btn-guardar { background: var(--ingreso); color: white; }
-        .btn-wa { background: #25D366; color: white; margin-top: 10px; font-size: 1.1rem; }
+        .btn-wa { background: #25D366; color: white; }
         .btn-reporte { background: var(--info); color: white; }
-        .item-historial { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; align-items: center; }
-        .tabla-resumen { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
+        .btn-excel { background: #1f7244; color: white; }
+        .btn-safety { background: var(--safety); color: white; }
+        .tabla-resumen { width: 100%; border-collapse: collapse; margin-top: 10px; }
         .tabla-resumen th, .tabla-resumen td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 0.9rem; }
-        .tabla-resumen th { background: #f8f9fa; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2 style="text-align:center; color: var(--primary); margin-bottom: 10px;">TIENDA JUAN DAVID CIRO</h2>
+    <h2 style="text-align:center; color: var(--primary);">TIENDA JUAN DAVID CIRO</h2>
 
-    <div class="caja-negra">
-        <small>EFECTIVO EN CAJA (REAL)</small>
-        <h1 id="txtSaldoCaja">$ 0</h1>
-    </div>
+    <div class="caja-negra"><small>EFECTIVO EN CAJA (REAL)</small><h1 id="txtSaldoCaja">$ 0</h1></div>
     <div class="dato-credito" id="txtSoloCredito">Ventas a Crédito Hoy: $ 0</div>
 
+    <div class="seccion" style="border: 2px dashed var(--safety);">
+        <label style="color:var(--safety)">🛡️ COPIA DE SEGURIDAD (ANTICALAMIDAD):</label>
+        <button class="btn btn-safety" onclick="exportarBackup()">DESCARGAR TODO EL RESPALDO (JSON)</button>
+        <label>Importar Respaldo anterior:</label>
+        <input type="file" id="importFile" onchange="importarBackup()" style="font-size: 0.7rem;">
+    </div>
+
     <div class="seccion">
-        <label>FECHA OPERACIÓN:</label>
-        <input type="date" id="fechaOp" onchange="render()">
-        
-        <label>NUEVA CATEGORÍA:</label>
+        <label>FECHA OPERACIÓN:</label><input type="date" id="fechaOp" onchange="render()">
+        <label>GESTIÓN DE CATEGORÍAS:</label>
         <div style="display:flex; gap:5px;">
-            <input type="text" id="nuevaSub" placeholder="Ej: QUESOS...">
-            <button onclick="agregarCategoria()" style="width:60px; background:var(--primary); color:white; border-radius:8px; border:none;">+</button>
+            <input type="text" id="nuevaSub" placeholder="EJ: ARROZ SUPERARROZ"><button onclick="addCat()" style="width:50px">+</button>
         </div>
     </div>
 
     <div class="seccion">
         <input type="hidden" id="editId">
-        <label>TIPO Y CATEGORÍA:</label>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
-            <select id="tipoGen">
-                <option value="INGRESO">INGRESO</option>
-                <option value="EGRESO">EGRESO</option>
-            </select>
-            <select id="selSub"></select>
-        </div>
-
-        <label>VALOR ($):</label>
+        <label>Tipo de Movimiento:</label>
+        <select id="tipoGen"><option value="INGRESO">INGRESO (+)</option><option value="EGRESO">EGRESO (-)</option></select>
+        <label>Subcategoría:</label>
+        <select id="selSub"></select>
+        <label>Valor ($):</label>
         <input type="number" id="txtValor" placeholder="0">
-
-        <label>DETALLE:</label>
-        <input type="text" id="txtDetalle">
-
-        <button class="btn btn-guardar" id="btnAccion" onclick="guardar()">REGISTRAR MOVIMIENTO</button>
-        <button id="btnCancel" style="display:none; margin-top:5px; background:#95a5a6; color:white; border:none; padding:10px; width:100%; border-radius:8px;" onclick="cancelarEdit()">Cancelar</button>
+        <label>Detalle / Proveedor:</label>
+        <input type="text" id="txtDetalle" placeholder="Detalle opcional">
+        <button class="btn btn-guardar" id="btnAccion" onclick="guardar()">REGISTRAR EN EL SISTEMA</button>
     </div>
 
     <div class="seccion" style="background: #fdfefe; border: 2px solid #3498db;">
-        <h3 style="margin-top:0; color:#2980b9;">📊 INFORME POR RANGO</h3>
+        <h3 style="margin-top:0; color:#2980b9;">📊 INFORMES CONSOLIDADOS</h3>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-            <input type="date" id="repDesde">
-            <input type="date" id="repHasta">
+            <input type="date" id="repDesde"><input type="date" id="repHasta">
         </div>
-        <button class="btn btn-reporte" onclick="generarConsolidado()">VER TABLA DE TOTALES</button>
+        <button class="btn btn-reporte" onclick="generarConsolidado()">1. VER TOTALES EN PANTALLA</button>
+        <button class="btn btn-excel" onclick="exportarExcel('consolidado')">2. DESCARGAR EXCEL CONSOLIDADO</button>
+        <button class="btn btn-wa" style="background:#075e54;" onclick="enviarWA('consolidado')">3. ENVIAR CONSOLIDADO DISCRIMINADO WA</button>
         <div id="resReporte"></div>
-        <div id="btnContenedorWA"></div>
     </div>
 
     <h3>Movimientos del Día</h3>
     <div id="listaDía"></div>
-
-    <button class="btn btn-wa" onclick="enviarWA('diario')">🚀 ENVIAR CIERRE DIARIO AL WHATSAPP</button>
+    <button class="btn btn-excel" onclick="exportarExcel('diario')">📄 DESCARGAR EXCEL DEL DÍA</button>
+    <button class="btn btn-wa" onclick="enviarWA('diario')">🚀 ENVIAR CIERRE DIARIO DISCRIMINADO WA</button>
 </div>
 
 <script>
-    let movs = JSON.parse(localStorage.getItem('tienda_v12')) || [];
-    let categorias = JSON.parse(localStorage.getItem('cats_v12')) || ["VENTA CONTADO", "VENTA CREDITO", "PAGO PROVEEDOR", "GASTOS VARIOS"];
+    let movs = JSON.parse(localStorage.getItem('tienda_v14')) || [];
+    let cats = JSON.parse(localStorage.getItem('cats_v14')) || ["VENTA CONTADO", "VENTA CREDITO", "PAGO PROVEEDOR", "GASTOS"];
 
     const hoy = new Date().toISOString().split('T')[0];
     document.getElementById('fechaOp').value = hoy;
     document.getElementById('repDesde').value = hoy;
     document.getElementById('repHasta').value = hoy;
 
-    function agregarCategoria() {
+    function addCat() {
         const n = document.getElementById('nuevaSub').value.toUpperCase().trim();
-        if(n && !categorias.includes(n)) {
-            categorias.push(n);
-            localStorage.setItem('cats_v12', JSON.stringify(categorias));
-            document.getElementById('nuevaSub').value = "";
-            poblarCats();
-        }
+        if(n && !cats.includes(n)) { cats.push(n); localStorage.setItem('cats_v14', JSON.stringify(cats)); poblarCats(); }
     }
 
     function poblarCats() {
         const s = document.getElementById('selSub');
-        s.innerHTML = "";
-        categorias.sort().forEach(x => s.innerHTML += `<option value="${x}">${x}</option>`);
+        s.innerHTML = ""; cats.sort().forEach(x => s.innerHTML += `<option value="${x}">${x}</option>`);
     }
 
     function guardar() {
         const v = parseFloat(document.getElementById('txtValor').value);
         const id = document.getElementById('editId').value;
-        if(!v) return alert("Ingrese un valor");
-
-        const reg = {
-            id: id ? parseInt(id) : Date.now(),
-            fecha: document.getElementById('fechaOp').value,
-            tipo: document.getElementById('tipoGen').value,
-            sub: document.getElementById('selSub').value,
-            detalle: document.getElementById('txtDetalle').value || "Sin detalle",
-            valor: v
-        };
-
-        if(id) movs = movs.map(m => m.id === reg.id ? reg : m);
-        else movs.push(reg);
-
-        localStorage.setItem('tienda_v12', JSON.stringify(movs));
-        cancelarEdit();
-        render();
-    }
-
-    function prepararEdit(id) {
-        const m = movs.find(x => x.id === id);
-        document.getElementById('editId').value = m.id;
-        document.getElementById('tipoGen').value = m.tipo;
-        document.getElementById('selSub').value = m.sub;
-        document.getElementById('txtDetalle').value = m.detalle;
-        document.getElementById('txtValor').value = m.valor;
-        document.getElementById('btnAccion').innerText = "ACTUALIZAR REGISTRO";
-        document.getElementById('btnCancel').style.display = "block";
-    }
-
-    function cancelarEdit() {
-        document.getElementById('editId').value = "";
-        document.getElementById('txtValor').value = "";
-        document.getElementById('txtDetalle').value = "";
-        document.getElementById('btnAccion').innerText = "REGISTRAR MOVIMIENTO";
-        document.getElementById('btnCancel').style.display = "none";
-    }
-
-    function borrar(id) {
-        if(confirm("¿Eliminar?")) {
-            movs = movs.filter(m => m.id !== id);
-            localStorage.setItem('tienda_v12', JSON.stringify(movs));
-            render();
-        }
+        if(!v) return alert("Ingrese un valor válido");
+        const reg = { id: id ? parseInt(id) : Date.now(), fecha: document.getElementById('fechaOp').value, tipo: document.getElementById('tipoGen').value, sub: document.getElementById('selSub').value, detalle: document.getElementById('txtDetalle').value, valor: v };
+        if(id) movs = movs.map(m => m.id === reg.id ? reg : m); else movs.push(reg);
+        localStorage.setItem('tienda_v14', JSON.stringify(movs));
+        document.getElementById('editId').value = ""; document.getElementById('txtValor').value = ""; render();
     }
 
     function render() {
         const f = document.getElementById('fechaOp').value;
         const lista = document.getElementById('listaDía');
-        lista.innerHTML = "";
-        let caja = 0; let cred = 0;
-
+        lista.innerHTML = ""; let caja = 0; let cred = 0;
         movs.filter(m => m.fecha === f).forEach(m => {
             if(m.sub === "VENTA CREDITO") cred += m.valor;
-            else {
-                if(m.tipo === "INGRESO") caja += m.valor;
-                else caja -= m.valor;
-            }
-            lista.innerHTML += `<div class="item-historial">
-                <div><b>${m.sub}</b><br><small>${m.detalle}</small></div>
-                <div style="text-align:right"><b style="color:${m.tipo==='INGRESO'?'green':'red'}">${m.tipo==='INGRESO'?'+':'-'} $${m.valor.toLocaleString()}</b><br>
-                <span onclick="prepararEdit(${m.id})" style="cursor:pointer">✏️</span> <span onclick="borrar(${m.id})" style="color:red; cursor:pointer; margin-left:10px;">🗑️</span></div>
+            else { if(m.tipo === "INGRESO") caja += m.valor; else caja -= m.valor; }
+            lista.innerHTML += `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding:10px;">
+                <span><b>${m.sub}</b><br><small>${m.detalle}</small></span>
+                <span>$${m.valor.toLocaleString()} <button onclick="borrar(${m.id})" style="color:red">x</button></span>
             </div>`;
         });
         document.getElementById('txtSaldoCaja').innerText = `$ ${caja.toLocaleString()}`;
         document.getElementById('txtSoloCredito').innerText = `Ventas a Crédito Hoy: $ ${cred.toLocaleString()}`;
     }
 
-    function generarConsolidado() {
-        const d = document.getElementById('repDesde').value;
-        const h = document.getElementById('repHasta').value;
-        let res = {};
-        
-        movs.filter(m => m.fecha >= d && m.fecha <= h).forEach(m => {
-            if(!res[m.sub]) res[m.sub] = 0;
-            res[m.sub] += (m.tipo === "INGRESO" ? m.valor : -m.valor);
-        });
+    function borrar(id) { if(confirm("¿Eliminar este registro?")) { movs = movs.filter(m => m.id !== id); localStorage.setItem('tienda_v14', JSON.stringify(movs)); render(); } }
 
-        let tabla = `<table class="tabla-resumen"><tr><th>Categoría</th><th>Total Neto</th></tr>`;
-        for(let s in res) {
-            tabla += `<tr><td>${s}</td><td>$ ${res[s].toLocaleString()}</td></tr>`;
-        }
+    function generarConsolidado() {
+        const d = document.getElementById('repDesde').value; const h = document.getElementById('repHasta').value;
+        let res = {}; movs.filter(m => m.fecha >= d && m.fecha <= h).forEach(m => {
+            if(!res[m.sub]) res[m.sub] = 0; res[m.sub] += (m.tipo === "INGRESO" ? m.valor : -m.valor);
+        });
+        let tabla = `<table class="tabla-resumen"><tr><th>Concepto</th><th>Saldo Neto</th></tr>`;
+        for(let s in res) { tabla += `<tr><td>${s}</td><td>$ ${res[s].toLocaleString()}</td></tr>`; }
         document.getElementById('resReporte').innerHTML = tabla + `</table>`;
-        
-        // Mostrar botón de WhatsApp Consolidado
-        document.getElementById('btnContenedorWA').innerHTML = `
-            <button class="btn btn-wa" style="background:#075e54;" onclick="enviarWA('consolidado')">
-                📲 ENVIAR ESTE CONSOLIDADO AL CELULAR
-            </button>`;
     }
 
     function enviarWA(modo) {
         let msg = "";
         if(modo === 'diario') {
             const f = document.getElementById('fechaOp').value;
-            const caja = document.getElementById('txtSaldoCaja').innerText;
-            const cred = document.getElementById('txtSoloCredito').innerText;
-            let det = "";
-            let t = {};
-            movs.filter(m => m.fecha === f).forEach(m => { t[m.sub] = (t[m.sub] || 0) + (m.tipo === "INGRESO" ? m.valor : -m.valor); });
-            for(let c in t) { det += `• ${c}: $${t[c].toLocaleString()}\n`; }
-            msg = `*CIERRE DIARIO*\nFecha: ${f}\n*EFECTIVO CAJA: ${caja}*\n*${cred}*\n\n*DETALLE:*\n${det}`;
-        } else {
-            const d = document.getElementById('repDesde').value;
-            const h = document.getElementById('repHasta').value;
-            let res = {};
-            movs.filter(m => m.fecha >= d && m.fecha <= h).forEach(m => {
-                if(!res[m.sub]) res[m.sub] = 0;
-                res[m.sub] += (m.tipo === "INGRESO" ? m.valor : -m.valor);
+            let res = {}; let caja = 0; let cred = 0;
+            movs.filter(m => m.fecha === f).forEach(m => {
+                if(!res[m.sub]) res[m.sub] = 0; 
+                let val = (m.tipo === "INGRESO" ? m.valor : -m.valor);
+                res[m.sub] += val;
+                if(m.sub === "VENTA CREDITO") cred += m.valor; else caja += val;
             });
-            let det = "";
-            for(let s in res) { det += `• ${s}: $${res[s].toLocaleString()}\n`; }
-            msg = `*REPORTE CONSOLIDADO*\nDesde: ${d}\nHasta: ${h}\n\n*TOTALES POR CATEGORÍA:*\n${det}`;
+            msg = `*CIERRE DIARIO DISCRIMINADO*\nFecha: ${f}\n--------------------------\n`;
+            for(let s in res) { msg += `• ${s}: $${res[s].toLocaleString()}\n`; }
+            msg += `--------------------------\n*EFECTIVO EN CAJA: $${caja.toLocaleString()}*\n*VENTAS CRÉDITO: $${cred.toLocaleString()}*`;
+        } else {
+            const d = document.getElementById('repDesde').value; const h = document.getElementById('repHasta').value;
+            let res = {}; 
+            movs.filter(m => m.fecha >= d && m.fecha <= h).forEach(m => {
+                if(!res[m.sub]) res[m.sub] = 0; res[m.sub] += (m.tipo === "INGRESO" ? m.valor : -m.valor);
+            });
+            msg = `*REPORTE CONSOLIDADO DISCRIMINADO*\nDesde: ${d}\nHasta: ${h}\n--------------------------\n`;
+            for(let s in res) { msg += `• ${s}: $${res[s].toLocaleString()}\n`; }
         }
         window.open(`https://api.whatsapp.com/send?phone=573117700431&text=${encodeURIComponent(msg)}`);
     }
 
-    poblarCats();
-    render();
+    function exportarExcel(modo) {
+        let d = (modo === 'diario') ? movs.filter(m => m.fecha === document.getElementById('fechaOp').value) : movs.filter(m => m.fecha >= document.getElementById('repDesde').value && m.fecha <= document.getElementById('repHasta').value);
+        const ws = XLSX.utils.json_to_sheet(d); const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Reporte"); XLSX.writeFile(wb, `Tienda_JuanDavid_${modo}.xlsx`);
+    }
+
+    function exportarBackup() {
+        const blob = new Blob([JSON.stringify({movs, cats})], {type: "application/json"});
+        const url = URL.createObjectURL(blob); const a = document.createElement('a');
+        a.href = url; a.download = `BACKUP_TIENDA_V14_${hoy}.json`; a.click();
+    }
+
+    function importarBackup() {
+        const file = document.getElementById('importFile').files[0]; if(!file) return;
+        const reader = new FileReader(); reader.onload = (e) => {
+            const data = JSON.parse(e.target.result); movs = data.movs; cats = data.cats;
+            localStorage.setItem('tienda_v14', JSON.stringify(movs)); localStorage.setItem('cats_v14', JSON.stringify(cats));
+            alert("Respaldo cargado correctamente"); poblarCats(); render();
+        }; reader.readAsText(file);
+    }
+
+    poblarCats(); render();
 </script>
 </body>
 </html>
